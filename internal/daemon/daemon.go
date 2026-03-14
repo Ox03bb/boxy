@@ -1,7 +1,6 @@
 package daemon
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -13,17 +12,23 @@ import (
 	"github.com/Ox03bb/boxy/internal/ipc"
 )
 
-func StartDeamon() {
+func StartDaemon() {
+	print("StartDaemon\n")
 
-	if len(os.Args) > 2 && os.Args[0] == "child" {
+	if len(os.Args) > 2 && os.Args[1] == "child" {
+		print("chiiiiiiiiiiiiild\n")
 		child()
 		return
 	}
+	print("ddddddddddddddddddddd\n")
 
 	daemon("")
 }
 
 func child() {
+	print("\n\n")
+	fmt.Printf("Args: %v\n", os.Args[2:])
+
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 
 	cmd.Stdin = os.Stdin
@@ -34,7 +39,7 @@ func child() {
 	syscall.Chroot("/home/ox03bb/Desktop/boxy/env")
 	syscall.Chdir("/")
 
-	syscall.Mount("proc", "proc", "proc", 0, "")
+	// syscall.Mount("proc", "proc", "proc", 0, "")
 
 	err := cmd.Run()
 	if err != nil {
@@ -78,10 +83,11 @@ func handler(c net.Conn) {
 
 	var cmnd ipc.Command
 
-	err = json.Unmarshal(buf, &cmnd)
+	err = cmnd.UnmarshalJSON(buf)
 
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+
+		fmt.Printf("\033[31mError: %s\033[0m", err.Error())
 		return
 	}
 

@@ -9,18 +9,28 @@ import (
 )
 
 func RunHandler(c ipc.Command) {
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+	print("========= RunHandler =========\n")
+
+	cmnd := c.Args.(*ipc.Run).Image.Cmd
+	if len(cmnd) == 0 {
+		cmnd = []string{"/bin/bash"}
+	}
+	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
+
+	print("1111111111111111111111111111111111111111111\n")
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	print("................................\n")
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags:   syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWIPC,
 		Unshareflags: syscall.CLONE_NEWUTS,
 		Setctty:      true,
 		Setsid:       true,
 	}
+	print("00000000000000000000000000000000000000000000000\n")
 
 	err := cmd.Run()
 	if err != nil {
