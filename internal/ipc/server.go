@@ -3,6 +3,7 @@ package ipc
 import (
 	"fmt"
 	"net"
+	"os"
 )
 
 func echoServer(c net.Conn) {
@@ -22,12 +23,16 @@ func echoServer(c net.Conn) {
 	}
 }
 
-func server() {
-	l, err := net.Listen("unix", SocketPath)
+func Server() {
+	os.Remove(DefaultSocketPath)
+
+	l, err := net.Listen("unix", DefaultSocketPath)
 	if err != nil {
 		println("listen error", err.Error())
 		return
 	}
+
+	defer os.Remove(DefaultSocketPath)
 
 	for {
 		fd, err := l.Accept()

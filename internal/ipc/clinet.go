@@ -2,21 +2,23 @@ package ipc
 
 import (
 	"fmt"
-	"net"
 )
 
-func clinet() {
-	c, err := net.Dial("unix", SocketPath)
+func Clinet() {
 	var msg string
+	c, err := Connect(DefaultSocketPath)
+
 	if err != nil {
-		panic(err.Error())
+		panic("Conn error")
 	}
+
 	for {
 		fmt.Scan(&msg)
-		_, err := c.Write([]byte("msg\n"))
+		msg += "\n"
+		Send(c, msg)
 		if err != nil {
 			println(err.Error())
 		}
-
+		Recive(c)
 	}
 }
