@@ -1,0 +1,4 @@
+{
+	"name": "ubuntu",
+	"cmd" : "/bin/bash"
+}
