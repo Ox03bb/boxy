@@ -1,15 +1,13 @@
 package box
 
 type Image struct {
-	Id      string
-	Name    string
-	Version string
-	Path    string
+	Name string
+	Cmd  []string
 }
 
 type ImageService interface {
-	pull(name string, version string)
+	pull(name string)
 	push()
-	remove(id string)
+	remove(name string)
 	List() []Image
 }
