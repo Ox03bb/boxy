@@ -9,7 +9,7 @@ const (
 	StopC Cmd = "stop"
 )
 
-// Base Command
+// ! Base Command
 type Command struct {
 	Cmd  Cmd ``
 	Args CmdArg
