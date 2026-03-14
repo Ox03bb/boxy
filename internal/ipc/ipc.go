@@ -9,15 +9,20 @@ const (
 )
 
 func Connect(SocketPath string) (net.Conn, error) {
-	c, err := net.Dial("unix", DefaultSocketPath)
+	sock := DefaultSocketPath
+	if SocketPath != "" {
+		sock = SocketPath
+	}
+
+	c, err := net.Dial("unix", sock)
 	if err != nil {
 		return nil, err
 	}
 	return c, nil
 }
 
-func Send(c net.Conn, msg string) error {
-	_, err := c.Write([]byte(msg))
+func Send(c net.Conn, msg []byte) error {
+	_, err := c.Write(msg)
 	if err != nil {
 		return err
 	}
@@ -31,4 +36,8 @@ func Recive(c net.Conn) (int, error) {
 		return 0, err
 	}
 	return n, nil
+}
+
+func Close(c net.Conn) error {
+	return c.Close()
 }
