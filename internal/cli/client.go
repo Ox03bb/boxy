@@ -7,7 +7,7 @@ import (
 	"github.com/Ox03bb/boxy/internal/ipc"
 )
 
-func Client(req *ipc.Command) error {
+func client(req *ipc.Command) error {
 	c, err := ipc.Connect("")
 	if err != nil {
 		return fmt.Errorf("connection error: %w", err)

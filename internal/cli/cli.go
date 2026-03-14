@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Ox03bb/boxy/internal/ipc"
+	"github.com/Ox03bb/boxy/internal/cli/handler"
 	"github.com/spf13/cobra"
 )
 
@@ -13,24 +13,28 @@ var rootCmd = &cobra.Command{
 	Short: "Boxy CLI",
 }
 
+// run command
+
 var runCmd = &cobra.Command{
 	Use:   "run [OPTIONS] IMAGE [COMMAND]",
 	Short: "Run the boxy command",
 	Run: func(cmd *cobra.Command, args []string) {
-		runResult, err := ParseRunArgs(cmd, args)
+		req, err := handler.RunHandler(cmd, args)
 		if err != nil {
 			fmt.Println("Error:", err)
-			os.Exit(1)
+			return
 		}
-		req := &ipc.Command{
-			Cmd:  ipc.RunC,
-			Args: runResult,
-		}
-		if err := Client(req); err != nil {
+
+		if err := client(req); err != nil {
 			fmt.Println("Client error:", err)
-			os.Exit(1)
 		}
 	},
+}
+
+func init() {
+	// Register flags for the run command
+	runCmd.Flags().String("name", "", "Assign a name to the box")
+	runCmd.Flags().String("image", "", "Image to use (optional)")
 }
 
 func Execute() {
