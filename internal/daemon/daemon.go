@@ -1,10 +1,12 @@
 package daemon
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"os/signal"
 	"syscall"
 
 	"github.com/Ox03bb/boxy/internal/config"
@@ -35,15 +37,19 @@ func child() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	cmd.Env = []string{
+		"PATH=/bin:/usr/bin:/sbin:/usr/sbin",
+	}
+
 	syscall.Sethostname([]byte("box_01"))
 	syscall.Chroot("/home/ox03bb/Desktop/boxy/env")
 	syscall.Chdir("/")
 
-	// syscall.Mount("proc", "proc", "proc", 0, "")
+	syscall.Mount("proc", "proc", "proc", 0, "")
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 }
 
@@ -62,9 +68,22 @@ func daemon(socketPath string) error {
 
 	defer os.Remove(socketPath)
 
+	// handle SIGINT / SIGTERM for graceful shutdown
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-sigc
+		fmt.Printf("received signal %v, shutting down\n", s)
+		l.Close()
+	}()
+
 	for {
 		cnn, err := l.Accept()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				println("listener closed, exiting")
+				return nil
+			}
 			println("accept error", err.Error())
 			return err
 		}
@@ -77,7 +96,7 @@ func handler(c net.Conn) {
 	buf, err := ipc.Recive(c)
 
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+		fmt.Printf("Error: %v\n", err)
 		return
 	}
 
@@ -94,6 +113,6 @@ func handler(c net.Conn) {
 	if cmnd.Cmd == ipc.RunC {
 		dh.RunHandler(cmnd)
 	} else {
-		fmt.Errorf("Error: command not found")
+		fmt.Println("Error: command not found")
 	}
 }

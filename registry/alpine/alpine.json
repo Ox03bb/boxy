@@ -1,4 +1,4 @@
 {
 	"name": "alpine",
-	"cmd" : "/bin/bash"
+	"cmd" : "/bin/sh"
 }

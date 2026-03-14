@@ -50,7 +50,7 @@ func RunArgsParse(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 	}
 
 	if len(command) == 0 {
-		command = []string{"/bin/bash"}
+		command = []string{"/bin/sh"}
 	}
 
 	run := &ipc.Run{

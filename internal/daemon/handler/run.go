@@ -13,7 +13,7 @@ func RunHandler(c ipc.Command) {
 
 	cmnd := c.Args.(*ipc.Run).Image.Cmd
 	if len(cmnd) == 0 {
-		cmnd = []string{"/bin/bash"}
+		cmnd = []string{"/bin/sh"}
 	}
 	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
 
@@ -27,8 +27,8 @@ func RunHandler(c ipc.Command) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags:   syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWIPC,
 		Unshareflags: syscall.CLONE_NEWUTS,
-		Setctty:      true,
-		Setsid:       true,
+		// Setctty:      true,
+		// Setsid:       true,
 	}
 	print("00000000000000000000000000000000000000000000000\n")
 
