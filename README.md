@@ -11,3 +11,20 @@
 
 
 Boxy is a lightweight containerization system built to run isolated applications using core Linux features. It uses namespaces, cgroups, and filesystem isolation to create independent environments. Designed for simplicity and learning, Boxy demonstrates how container runtimes manage processes, resources, and system isolation.
+
+## Makefile
+
+```makefile
+# build CLI (default)
+make build
+
+# build daemon
+make build TARGET=daemon
+
+# install daemon to GOBIN
+make install TARGET=daemon
+
+# convenience
+make build-daemon
+make install-cli
+```
