@@ -15,7 +15,7 @@ func Clinet() {
 	for {
 		fmt.Scan(&msg)
 		msg += "\n"
-		Send(c, msg)
+		Send(c, []byte(msg))
 		if err != nil {
 			println(err.Error())
 		}

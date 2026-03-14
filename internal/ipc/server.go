@@ -8,14 +8,15 @@ import (
 
 func echoServer(c net.Conn) {
 	for {
-		buf := make([]byte, 512)
+		buf := make([]byte, 2048)
 		nr, err := c.Read(buf)
 		if err != nil {
 			return
 		}
 
 		data := buf[0:nr]
-		fmt.Printf("Received: %v", string(data))
+		data = append(data)
+		fmt.Printf("Received: %s", string(data))
 		_, err = c.Write(data)
 		if err != nil {
 			panic("Write: " + err.Error())

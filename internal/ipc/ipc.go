@@ -29,13 +29,13 @@ func Send(c net.Conn, msg []byte) error {
 	return nil
 }
 
-func Recive(c net.Conn) (int, error) {
-	buf := make([]byte, 1024)
+func Recive(c net.Conn) ([]byte, error) {
+	buf := make([]byte, 2048)
 	n, err := c.Read(buf)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return n, nil
+	return buf[0:n], nil
 }
 
 func Close(c net.Conn) error {
