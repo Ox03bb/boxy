@@ -1,0 +1,5 @@
+{
+	"name": "alpine",
+	"tag": "3.23.3",
+	"cmd" : "/bin/bash"
+}
