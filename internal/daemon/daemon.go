@@ -1,11 +1,12 @@
 package daemon
 
 import (
-	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"os/signal"
 	"syscall"
 
 	"github.com/Ox03bb/boxy/internal/config"
@@ -13,9 +14,9 @@ import (
 	"github.com/Ox03bb/boxy/internal/ipc"
 )
 
-func StartDeamon() {
+func StartDaemon() {
 
-	if len(os.Args) > 2 && os.Args[0] == "child" {
+	if len(os.Args) > 2 && os.Args[1] == "child" {
 		child()
 		return
 	}
@@ -24,11 +25,18 @@ func StartDeamon() {
 }
 
 func child() {
+	fmt.Printf("Args: %v\n", os.Args[2:])
+
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	cmd.Env = []string{
+		"PATH=/bin:/usr/bin:/sbin:/usr/sbin",
+		"TERM=xterm-256color",
+	}
 
 	syscall.Sethostname([]byte("box_01"))
 	syscall.Chroot("/home/ox03bb/Desktop/boxy/env")
@@ -38,11 +46,12 @@ func child() {
 
 	err := cmd.Run()
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 }
 
 func daemon(socketPath string) error {
+	print("Deamon\n")
 	if socketPath == "" {
 		socketPath = config.SocketPath
 	}
@@ -57,9 +66,22 @@ func daemon(socketPath string) error {
 
 	defer os.Remove(socketPath)
 
+	// handle SIGINT / SIGTERM for graceful shutdown
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-sigc
+		fmt.Printf("received signal %v, shutting down\n", s)
+		l.Close()
+	}()
+
 	for {
 		cnn, err := l.Accept()
 		if err != nil {
+			if errors.Is(err, net.ErrClosed) {
+				println("listener closed, exiting")
+				return nil
+			}
 			println("accept error", err.Error())
 			return err
 		}
@@ -71,23 +93,26 @@ func daemon(socketPath string) error {
 func handler(c net.Conn) {
 	buf, err := ipc.Recive(c)
 
+	fmt.Printf("Received: %s\n", string(buf))
+
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+		fmt.Printf("Error: %v\n", err)
 		return
 	}
 
 	var cmnd ipc.Command
 
-	err = json.Unmarshal(buf, &cmnd)
+	err = cmnd.UnmarshalJSON(buf)
 
 	if err != nil {
-		fmt.Errorf("Error: %w", err)
+
+		fmt.Printf("\033[31mError: %s\033[0m", err.Error())
 		return
 	}
 
 	if cmnd.Cmd == ipc.RunC {
-		dh.RunHandler(cmnd)
+		dh.RunHandler(cmnd, c)
 	} else {
-		fmt.Errorf("Error: command not found")
+		fmt.Println("Error: command not found")
 	}
 }

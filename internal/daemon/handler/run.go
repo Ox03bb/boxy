@@ -1,19 +1,32 @@
 package handler
 
 import (
-	"os"
+	"net"
 	"os/exec"
 	"syscall"
 
 	"github.com/Ox03bb/boxy/internal/ipc"
+	"github.com/creack/pty"
 )
 
-func RunHandler(c ipc.Command) {
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+func RunHandler(c ipc.Command, sock net.Conn) {
 
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmnd := c.Args.(*ipc.Run).Image.Cmd
+	if len(cmnd) == 0 {
+		cmnd = []string{"/bin/sh"}
+	}
+	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
+
+	master, slave, err := pty.Open()
+	if err != nil {
+		panic("Error: " + err.Error())
+	}
+
+	defer slave.Close()
+
+	cmd.Stdin = slave
+	cmd.Stdout = slave
+	cmd.Stderr = slave
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags:   syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWIPC,
@@ -22,45 +35,17 @@ func RunHandler(c ipc.Command) {
 		Setsid:       true,
 	}
 
-	err := cmd.Run()
+	// sock is a net.Conn; assert to *net.UnixConn for SendFD
+	if uconn, ok := sock.(*net.UnixConn); ok {
+		if err := ipc.SendFD(uconn, int(master.Fd())); err != nil {
+			panic("send fd error: " + err.Error())
+		}
+	} else {
+		panic("socket is not a UnixConn")
+	}
+
+	err = cmd.Start()
 	if err != nil {
 		panic("Error: " + err.Error())
 	}
 }
-
-// func ini() {
-// 	fmt.Printf("[running] %v \n", os.Args[2])
-
-// 	cmd := exec.Command("/proc/self/exe", append([]string{"prosses"}, os.Args[2:]...)...)
-
-// 	cmd.Stdin = os.Stdin
-// 	cmd.Stdout = os.Stdout
-// 	cmd.Stderr = os.Stderr
-
-// 	cmd.SysProcAttr = &syscall.SysProcAttr{
-// 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
-// 		Setctty:    true,
-// 		Setsid:     true,
-// 	}
-
-// 	err := cmd.Run()
-
-// 	if err != nil {
-// 		panic("Error: " + err.Error())
-// 	}
-// }
-
-// func prosses() {
-// 	fmt.Printf("[running] %v as %v\n", os.Args[2], os.Getpid())
-
-// 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-
-// 	syscall.Sethostname([]byte("xxx"))
-
-// 	cmd.Stdin = os.Stdin
-// 	cmd.Stdout = os.Stdout
-// 	cmd.Stderr = os.Stderr
-
-// 	err := cmd.Run()
-
-// }
