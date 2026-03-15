@@ -15,20 +15,16 @@ import (
 )
 
 func StartDaemon() {
-	print("StartDaemon\n")
 
 	if len(os.Args) > 2 && os.Args[1] == "child" {
-		print("chiiiiiiiiiiiiild\n")
 		child()
 		return
 	}
-	print("ddddddddddddddddddddd\n")
 
 	daemon("")
 }
 
 func child() {
-	print("\n\n")
 	fmt.Printf("Args: %v\n", os.Args[2:])
 
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
@@ -39,6 +35,7 @@ func child() {
 
 	cmd.Env = []string{
 		"PATH=/bin:/usr/bin:/sbin:/usr/sbin",
+		"TERM=xterm-256color",
 	}
 
 	syscall.Sethostname([]byte("box_01"))
@@ -54,6 +51,7 @@ func child() {
 }
 
 func daemon(socketPath string) error {
+	print("Deamon\n")
 	if socketPath == "" {
 		socketPath = config.SocketPath
 	}
@@ -95,6 +93,8 @@ func daemon(socketPath string) error {
 func handler(c net.Conn) {
 	buf, err := ipc.Recive(c)
 
+	fmt.Printf("Received: %s\n", string(buf))
+
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return
@@ -111,7 +111,7 @@ func handler(c net.Conn) {
 	}
 
 	if cmnd.Cmd == ipc.RunC {
-		dh.RunHandler(cmnd)
+		dh.RunHandler(cmnd, c)
 	} else {
 		fmt.Println("Error: command not found")
 	}
