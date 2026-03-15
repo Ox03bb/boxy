@@ -1,5 +1,5 @@
 
-TARGET ?= cli
+TARGET ?=
 
 # Names/paths for each target
 CLI_NAME := boxy
@@ -28,7 +28,12 @@ else
 endif
 
 build:
+ifeq ($(strip $(TARGET)),)
+	$(MAKE) build-cli
+	$(MAKE) build-daemon
+else
 	go build -o $(BUILD_NAME) $(BUILD_PATH)
+endif
 
 install: build
 	install -m 0755 $(BUILD_NAME) $(GOBIN)/$(BUILD_NAME)
