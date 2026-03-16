@@ -7,14 +7,14 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/Ox03bb/boxy/internal/box"
+	bx "github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/ipc"
 	"github.com/creack/pty"
 )
 
 func RunHandler(c ipc.Command, sock net.Conn) {
 
-	var box = box.Box{}
+	var box = bx.Box{}
 
 	if c.Args == nil {
 		panic("Image name is required")
@@ -27,6 +27,8 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	} else {
 		box.Name = c.Args.(*ipc.Run).Name
 	}
+	box.SetHostname("")
+
 	box.SetRoot("")
 
 	cmnd := c.Args.(*ipc.Run).Image.Cmd
@@ -37,7 +39,10 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	image := c.Args.(*ipc.Run).Image
 
+	box.Image = image
+
 	err := image.InitFs(&box)
+
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Failed to create rootfs:", err)
 		if sock != nil {
@@ -59,10 +64,13 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	cmd := exec.Command("/proc/self/exe", args...)
 
 	master, slave, err := pty.Open()
+
 	if err != nil {
 		panic("Error: " + err.Error())
 
 	}
+
+	box.Pty = slave.Name()
 
 	defer slave.Close()
 
@@ -86,6 +94,8 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	} else {
 		panic("socket is not a UnixConn")
 	}
+
+	bx.WriteBoxJSON(&box) // write the metadata inside box.json
 
 	err = cmd.Start()
 	if err != nil {
