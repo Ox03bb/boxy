@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/config"
 	dh "github.com/Ox03bb/boxy/internal/daemon/handler"
 	"github.com/Ox03bb/boxy/internal/ipc"
@@ -27,7 +28,26 @@ func StartDaemon() {
 func child() {
 	fmt.Printf("Args: %v\n", os.Args[2:])
 
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
+	cmd := &exec.Cmd{}
+	var box = box.Box{}
+
+	cmnd := []string{}
+
+	box.GenerateID()
+
+	if len(os.Args) > 3 && os.Args[2] == "--name" {
+		box.Name = os.Args[3]
+
+		cmnd = append(cmnd, os.Args[4:]...)
+
+	} else {
+		box.Name = box.GenerateName(box.ID)
+
+		cmnd = append(cmnd, os.Args[2:]...)
+
+	}
+
+	cmd = exec.Command(cmnd[0], cmnd[1:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -38,8 +58,8 @@ func child() {
 		"TERM=xterm-256color",
 	}
 
-	syscall.Sethostname([]byte("box_01"))
-	syscall.Chroot("/home/ox03bb/Desktop/boxy/env")
+	syscall.Sethostname([]byte(box.Name))
+	syscall.Chroot("/home/ox03bb/Desktop/boxy/env/e")
 	syscall.Chdir("/")
 
 	syscall.Mount("proc", "proc", "proc", 0, "")

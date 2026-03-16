@@ -16,20 +16,21 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 		cmnd = []string{"/bin/sh"}
 	}
 
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
+	// cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
 
-	// name := ""
-	// if len(c.Args.(*ipc.Run).Name) != 0 {
-	// 	name = c.Args.(*ipc.Run).Name
-	// }
+	name := ""
+	if len(c.Args.(*ipc.Run).Name) != 0 {
+		name = c.Args.(*ipc.Run).Name
+	}
 
-	// args := []string{"child"}
-	// if name != "" {
-	// 	args = append(args, name)
-	// }
-	// args = append(args, cmnd...)
+	args := []string{"child"}
+	if name != "" {
+		args = append(args, "--name")
+		args = append(args, name)
+	}
+	args = append(args, cmnd...)
 
-	// cmd := exec.Command("/proc/self/exe", args...)
+	cmd := exec.Command("/proc/self/exe", args...)
 
 	master, slave, err := pty.Open()
 	if err != nil {
@@ -47,6 +48,7 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 		Unshareflags: syscall.CLONE_NEWUTS,
 		Setctty:      true,
 		Setsid:       true,
+		Ctty:         0,
 	}
 
 	// sock is a net.Conn; assert to *net.UnixConn for SendFD

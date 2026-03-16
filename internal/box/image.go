@@ -87,14 +87,14 @@ func findCompressedRootfs(imageDir string) (string, error) {
 }
 
 func ensureBoxRoot(b *Box) (string, error) {
-	target := b.root
+	target := b.Root
 	if target == "" {
 		envPath := os.ExpandEnv(config.EnvPath)
-		boxDir := filepath.Join(envPath, b.name)
+		boxDir := filepath.Join(envPath, b.Name)
 		if err := os.MkdirAll(boxDir, 0755); err != nil {
 			return "", fmt.Errorf("failed creating box dir %s: %w", boxDir, err)
 		}
-		b.root = boxDir
+		b.Root = boxDir
 		return boxDir, nil
 	}
 	if err := os.MkdirAll(target, 0755); err != nil {

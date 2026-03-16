@@ -3,19 +3,21 @@ package box
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"os"
 	"time"
 )
 
 type Box struct {
-	id       string
-	name     string
-	root     string
-	hostname string
-	image    string
-	pty      *os.File
-	ports    map[string]string
-	pram     map[string]string
+	ID       string
+	Name     string
+	Root     string
+	Hostname string
+	Image    string
+	Pty      *os.File
+	Ports    map[string]string
+	Params   map[string]string
+	Env      map[string]string
 }
 
 type BoxService interface {
@@ -29,23 +31,34 @@ func (b *Box) GenerateID() string {
 	now := time.Now().UnixNano()
 	hash := sha256.Sum256([]byte(string(now)))
 
-	return hex.EncodeToString(hash[:])
+	b.ID = hex.EncodeToString(hash[:])
+	return b.ID
 }
 
 func (b *Box) GenerateName(id string) string {
-	return "box-" + id[:5]
+	b.Name = "box-" + id[:5]
+	return b.Name
 }
 
-func (b *Box) CreateRootfs() {
+func (b *Box) SetHostname(hostname string) {
+	if hostname == "" {
+		b.Hostname = b.Name
+		return
+	}
+	b.Hostname = hostname
+}
+
+func (b *Box) CreateRootfs() (string, error) {
 	envPath := os.Getenv("EnvPath")
 	if envPath == "" {
-		return
+		return "", errors.New("EnvPath not set")
 	}
-	boxDir := envPath + string(os.PathSeparator) + b.name
+	boxDir := envPath + string(os.PathSeparator) + b.ID
 	err := os.MkdirAll(boxDir, 0755)
 	if err != nil {
-		return
+		return "", err
 	}
-	b.root = boxDir
+	b.Root = boxDir
 
+	return b.Root, nil
 }
