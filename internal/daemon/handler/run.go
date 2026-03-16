@@ -15,7 +15,21 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	if len(cmnd) == 0 {
 		cmnd = []string{"/bin/sh"}
 	}
+
 	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
+
+	// name := ""
+	// if len(c.Args.(*ipc.Run).Name) != 0 {
+	// 	name = c.Args.(*ipc.Run).Name
+	// }
+
+	// args := []string{"child"}
+	// if name != "" {
+	// 	args = append(args, name)
+	// }
+	// args = append(args, cmnd...)
+
+	// cmd := exec.Command("/proc/self/exe", args...)
 
 	master, slave, err := pty.Open()
 	if err != nil {
