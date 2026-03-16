@@ -25,9 +25,12 @@ func StartDaemon() {
 }
 
 func child() {
-	fmt.Printf("Args: %v\n", os.Args[2:])
+	cmd := &exec.Cmd{}
 
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
+	name := os.Args[3]
+	root := os.Args[5]
+
+	cmd = exec.Command(os.Args[6], os.Args[7:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -38,11 +41,13 @@ func child() {
 		"TERM=xterm-256color",
 	}
 
-	syscall.Sethostname([]byte("box_01"))
-	syscall.Chroot("/home/ox03bb/Desktop/boxy/env")
+	syscall.Sethostname([]byte(name))
+	syscall.Chroot(root)
 	syscall.Chdir("/")
 
 	syscall.Mount("proc", "proc", "proc", 0, "")
+
+	fmt.Printf("Running command: %s\n", cmd.String())
 
 	err := cmd.Run()
 	if err != nil {
@@ -63,6 +68,7 @@ func daemon(socketPath string) error {
 		println("listen error", err.Error())
 		return err
 	}
+	os.Chmod(socketPath, 0660)
 
 	defer os.Remove(socketPath)
 

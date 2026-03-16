@@ -1,4 +1,8 @@
 {
 	"name": "ubuntu",
-	"cmd" : "/bin/sh"
+	"env": {
+		"PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+		"TERM": "xterm-256color"
+	},
+	"cmd" : "/bin/bash"
 }
