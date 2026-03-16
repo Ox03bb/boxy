@@ -76,7 +76,7 @@ func ensureBoxRoot(b *Box) (string, error) {
 	target := b.Root
 	if target == "" {
 		envPath := os.ExpandEnv(config.EnvPath)
-		boxDir := filepath.Join(envPath, b.Name)
+		boxDir := filepath.Join(envPath, b.ID, "rootfs")
 		if err := os.MkdirAll(boxDir, 0755); err != nil {
 			return "", fmt.Errorf("failed creating box dir %s: %w", boxDir, err)
 		}

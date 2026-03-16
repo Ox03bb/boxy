@@ -100,7 +100,7 @@ func (b *Box) SetRoot(root string) (string, error) {
 			b.GenerateID()
 		}
 
-		b.Root = filepath.Join(envPath, b.ID)
+		b.Root = filepath.Join(envPath, b.ID, "rootfs")
 
 	}
 
