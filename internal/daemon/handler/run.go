@@ -1,33 +1,59 @@
 package handler
 
 import (
+	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"syscall"
 
+	"github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/ipc"
 	"github.com/creack/pty"
 )
 
 func RunHandler(c ipc.Command, sock net.Conn) {
 
+	var box = box.Box{}
+
+	if c.Args == nil {
+		panic("Image name is required")
+	}
+
+	box.GenerateID()
+
+	if c.Args.(*ipc.Run).Name == "" {
+		box.GenerateName()
+	} else {
+		box.Name = c.Args.(*ipc.Run).Name
+	}
+	box.SetRoot("")
+
 	cmnd := c.Args.(*ipc.Run).Image.Cmd
+
 	if len(cmnd) == 0 {
 		cmnd = []string{"/bin/sh"}
 	}
 
-	// cmd := exec.Command("/proc/self/exe", append([]string{"child"}, cmnd...)...)
+	image := c.Args.(*ipc.Run).Image
 
-	name := ""
-	if len(c.Args.(*ipc.Run).Name) != 0 {
-		name = c.Args.(*ipc.Run).Name
+	err := image.InitFs(&box)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to create rootfs:", err)
+		if sock != nil {
+			_ = sock.Close()
+		}
+		return
 	}
 
 	args := []string{"child"}
-	if name != "" {
-		args = append(args, "--name")
-		args = append(args, name)
-	}
+
+	args = append(args, "--name")
+	args = append(args, box.Name)
+
+	args = append(args, "--rootfs")
+	args = append(args, box.Root)
+
 	args = append(args, cmnd...)
 
 	cmd := exec.Command("/proc/self/exe", args...)
@@ -35,6 +61,7 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	master, slave, err := pty.Open()
 	if err != nil {
 		panic("Error: " + err.Error())
+
 	}
 
 	defer slave.Close()
