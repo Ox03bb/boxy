@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,8 +20,8 @@ type Box struct {
 	Name     string
 	Root     string
 	Hostname string
-	Image    string
-	Pty      *os.File
+	Image    Image
+	Pty      string
 	Ports    map[string]string
 	Params   map[string]string
 	Env      map[string]string
@@ -32,9 +34,9 @@ type BoxService interface {
 	remove(id string) error
 }
 
-func NewBox(imageName string) *Box {
+func NewBox(imageName Image) *Box {
 	box := &Box{
-		Image:  imageName,
+		Image:  Image{},
 		Ports:  make(map[string]string),
 		Params: make(map[string]string),
 		Env:    make(map[string]string),
@@ -105,4 +107,19 @@ func (b *Box) SetRoot(root string) (string, error) {
 	}
 
 	return b.Root, nil
+}
+
+func WriteBoxJSON(box *Box) error {
+	envPath := os.ExpandEnv(config.EnvPath)
+
+	filepath := filepath.Join(envPath, box.ID, "box.json")
+
+	data, err := json.MarshalIndent(box, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal box: %w", err)
+	}
+	if err := os.WriteFile(filepath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write box json %s: %w", filepath, err)
+	}
+	return nil
 }
