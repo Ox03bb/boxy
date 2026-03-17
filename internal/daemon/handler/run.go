@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	bx "github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/ipc"
@@ -50,6 +51,8 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 		}
 		return
 	}
+	box.Status = bx.Created
+	box.Created_at = time.Now()
 
 	args := []string{"child"}
 
@@ -58,6 +61,9 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	args = append(args, "--rootfs")
 	args = append(args, box.Root)
+
+	args = append(args, "--id")
+	args = append(args, box.ID)
 
 	args = append(args, cmnd...)
 
@@ -100,5 +106,10 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	err = cmd.Start()
 	if err != nil {
 		panic("Error: " + err.Error())
+	}
+
+	// mark the box as running after the child process has been started
+	if err := bx.UpdateStatus(box.ID, bx.Running); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to update box status to running:", err)
 	}
 }

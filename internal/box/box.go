@@ -15,16 +15,26 @@ import (
 	"github.com/Ox03bb/boxy/internal/config"
 )
 
+const ( //Box Status
+	Created = "created"
+	Running = "running"
+	Stopped = "stopped"
+	Exited  = "exited"
+)
+
 type Box struct {
-	ID       string
-	Name     string
-	Root     string
-	Hostname string
-	Image    Image
-	Pty      string
-	Ports    map[string]string
-	Params   map[string]string
-	Env      map[string]string
+	ID          string
+	Name        string
+	Root        string
+	Hostname    string
+	Image       Image
+	Status      string
+	Created_at  time.Time
+	Pty         string
+	ContainerID string
+	Ports       map[string]string
+	Params      map[string]string
+	Env         map[string]string
 }
 
 type BoxService interface {
@@ -124,7 +134,25 @@ func WriteBoxJSON(box *Box) error {
 	return nil
 }
 
-// Loadbox reads the box.json for a given box id and returns a Box object.
+func UpdateStatus(containerID, newStatus string) error {
+	if containerID == "" {
+		return fmt.Errorf("containerID is required")
+	}
+
+	b, err := Loadbox(containerID)
+	if err != nil {
+		return fmt.Errorf("failed to load box by ID %s: %w", containerID, err)
+
+	}
+	b.Status = newStatus
+	err = WriteBoxJSON(b)
+	if err != nil {
+		return fmt.Errorf("failed to write box json: %w", err)
+	}
+	return nil
+
+}
+
 func Loadbox(id string) (*Box, error) {
 	envPath := os.ExpandEnv(config.EnvPath)
 	jsonPath := filepath.Join(envPath, id, "box.json")

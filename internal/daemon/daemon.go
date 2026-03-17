@@ -30,7 +30,7 @@ func child() {
 	name := os.Args[3]
 	root := os.Args[5]
 
-	cmd = exec.Command(os.Args[6], os.Args[7:]...)
+	cmd = exec.Command(os.Args[8], os.Args[9:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
