@@ -123,3 +123,21 @@ func WriteBoxJSON(box *Box) error {
 	}
 	return nil
 }
+
+// Leadbox reads the box.json for a given box id and returns a Box object.
+func Leadbox(id string) (*Box, error) {
+	envPath := os.ExpandEnv(config.EnvPath)
+	jsonPath := filepath.Join(envPath, id, "box.json")
+
+	data, err := os.ReadFile(jsonPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading box json %s: %w", jsonPath, err)
+	}
+
+	var b Box
+	if err := json.Unmarshal(data, &b); err != nil {
+		return nil, fmt.Errorf("failed parsing box json %s: %w", jsonPath, err)
+	}
+
+	return &b, nil
+}
