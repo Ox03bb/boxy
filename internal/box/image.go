@@ -91,9 +91,7 @@ func ensureBoxRoot(b *Box) (string, error) {
 	return target, nil
 }
 
-// loadImage reads registry/<name>/image.json and returns an Image object.
-// The JSON `cmd` field may be either a string or an array of strings.
-func loadImage(name string) (*Image, error) {
+func LoadImage(name string) (*Image, error) {
 	registry := os.ExpandEnv(config.RegistryPath)
 	jsonPath := filepath.Join(registry, name, "image.json")
 

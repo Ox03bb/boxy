@@ -53,8 +53,13 @@ func RunArgsParse(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 		command = []string{"/bin/sh"}
 	}
 
+	imageObj, err := box.LoadImage(image)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load image %s: %w", image, err)
+	}
+
 	run := &ipc.Run{
-		Image: box.Image{Name: image, Cmd: command},
+		Image: *imageObj,
 		Name:  name,
 	}
 	return run, nil
