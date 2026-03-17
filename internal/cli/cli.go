@@ -68,6 +68,7 @@ func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(attachCmd)
 	rootCmd.AddCommand(psCmd)
+	rootCmd.AddCommand(rmCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -84,4 +85,19 @@ var psCmd = &cobra.Command{
 			return
 		}
 	},
+}
+
+var rmCmd = &cobra.Command{
+	Use:   "rm [OPTIONS] BOX",
+	Short: "Remove a box by ID or name",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.RmHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	rmCmd.Flags().String("name", "", "remove a box by name instead of ID")
 }

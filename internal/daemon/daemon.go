@@ -121,6 +121,8 @@ func handler(c net.Conn) {
 		dh.RunHandler(cmnd, c)
 	case ipc.PsC:
 		dh.PsHandler(cmnd, c)
+	case ipc.RmC:
+		dh.RmHandler(cmnd, c)
 	default:
 		fmt.Println("Error: command not found")
 	}

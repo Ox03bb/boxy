@@ -13,6 +13,7 @@ const (
 	AttachC Cmd = "attach"
 	PsC     Cmd = "ps"
 	StopC   Cmd = "stop"
+	RmC     Cmd = "rm"
 )
 
 // ! ================= Base Command ==================
@@ -46,6 +47,14 @@ type Ps struct{}
 
 func (Ps) cmdarg() {}
 
+// ================== rm Command ==================
+type Rm struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+}
+
+func (Rm) cmdarg() {}
+
 // ================== UnmarshalJSON for Command ==================
 
 func (c *Command) UnmarshalJSON(data []byte) error {
@@ -77,6 +86,14 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			}
 		}
 		c.Args = &a
+	case RmC:
+		var r Rm
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &r); err != nil {
+				return err
+			}
+		}
+		c.Args = &r
 	case PsC:
 		// ps has no args
 		c.Args = &Ps{}
