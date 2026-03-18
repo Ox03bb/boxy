@@ -64,9 +64,39 @@ func init() {
 
 // ================================================================
 
+// ======================= Exec command =======================
+
+var execCmd = &cobra.Command{
+	Use:   "exec [OPTIONS] BOX COMMAND",
+	Short: "Run a command in a running box (like docker exec)",
+	Run: func(cmd *cobra.Command, args []string) {
+		req, err := handler.ExecHandler(cmd, args)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		if err := handler.RunAndAttach(req); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	execCmd.Flags().BoolP("tty", "t", false, "Allocate a pseudo-TTY")
+	execCmd.Flags().BoolP("interactive", "i", false, "Keep STDIN open")
+	execCmd.Flags().String("name", "", "use name instead of ID to identify the box")
+}
+
+// ================================================================
+
+// ================================================================
+
 func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(attachCmd)
+	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(psCmd)
 	rootCmd.AddCommand(rmCmd)
 

@@ -119,6 +119,8 @@ func handler(c net.Conn) {
 	switch cmnd.Cmd {
 	case ipc.RunC:
 		dh.RunHandler(cmnd, c)
+	case ipc.ExecC:
+		dh.ExecHandler(cmnd, c)
 	case ipc.PsC:
 		dh.PsHandler(cmnd, c)
 	case ipc.RmC:
