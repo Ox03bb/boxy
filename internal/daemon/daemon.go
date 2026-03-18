@@ -121,6 +121,8 @@ func handler(c net.Conn) {
 		dh.RunHandler(cmnd, c)
 	case ipc.ExecC:
 		dh.ExecHandler(cmnd, c)
+	case ipc.StopC:
+		dh.StopHandler(cmnd, c)
 	case ipc.PsC:
 		dh.PsHandler(cmnd, c)
 	case ipc.RmC:

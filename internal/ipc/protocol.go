@@ -67,6 +67,14 @@ type Rm struct {
 
 func (Rm) cmdarg() {}
 
+// ================== stop Command ==================
+type Stop struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+}
+
+func (Stop) cmdarg() {}
+
 // ================== UnmarshalJSON for Command ==================
 
 func (c *Command) UnmarshalJSON(data []byte) error {
@@ -114,6 +122,14 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			}
 		}
 		c.Args = &r
+	case StopC:
+		var s Stop
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &s); err != nil {
+				return err
+			}
+		}
+		c.Args = &s
 	case PsC:
 		// ps has no args
 		c.Args = &Ps{}

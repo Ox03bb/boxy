@@ -77,6 +77,11 @@ func ExecHandler(c ipc.Command, sock net.Conn) {
 		return
 	}
 
+	// record PID in box metadata
+	if cmd.Process != nil {
+		pid := cmd.Process.Pid
+		boxObj.PIDs = append(boxObj.PIDs, pid)
+	}
 	boxObj.Status = bx.Running
 	boxObj.Created_at = time.Now()
 	_ = bx.WriteBoxJSON(boxObj)

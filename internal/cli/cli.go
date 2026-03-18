@@ -99,6 +99,7 @@ func Execute() {
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(psCmd)
 	rootCmd.AddCommand(rmCmd)
+	rootCmd.AddCommand(stopCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -130,4 +131,21 @@ var rmCmd = &cobra.Command{
 
 func init() {
 	rmCmd.Flags().String("name", "", "remove a box by name instead of ID")
+}
+
+// ======================= Stop command =======================
+
+var stopCmd = &cobra.Command{
+	Use:   "stop [OPTIONS] BOX",
+	Short: "Stop (kill) a running box but keep rootfs and metadata",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.StopHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	stopCmd.Flags().String("name", "", "stop a box by name instead of ID")
 }

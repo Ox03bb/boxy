@@ -32,6 +32,7 @@ type Box struct {
 	Status     string
 	Created_at time.Time
 	Pty        string
+	PIDs       []int
 	Ports      map[string]string
 	Params     map[string]string
 	Env        map[string]string
