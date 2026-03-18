@@ -123,3 +123,46 @@ func WriteBoxJSON(box *Box) error {
 	}
 	return nil
 }
+
+// Loadbox reads the box.json for a given box id and returns a Box object.
+func Loadbox(id string) (*Box, error) {
+	envPath := os.ExpandEnv(config.EnvPath)
+	jsonPath := filepath.Join(envPath, id, "box.json")
+
+	data, err := os.ReadFile(jsonPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed reading box json %s: %w", jsonPath, err)
+	}
+
+	var b Box
+	if err := json.Unmarshal(data, &b); err != nil {
+		return nil, fmt.Errorf("failed parsing box json %s: %w", jsonPath, err)
+	}
+
+	return &b, nil
+}
+
+// LoadAllBoxes scans the EnvPath directory and loads all valid box.json files.
+func LoadAllBoxes() ([]*Box, error) {
+	envPath := os.ExpandEnv(config.EnvPath)
+
+	entries, err := os.ReadDir(envPath)
+	if err != nil {
+		return nil, err
+	}
+
+	var boxes []*Box
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue
+		}
+		b, err := Loadbox(e.Name())
+		if err != nil {
+			// skip invalid or unreadable boxes
+			continue
+		}
+		boxes = append(boxes, b)
+	}
+
+	return boxes, nil
+}

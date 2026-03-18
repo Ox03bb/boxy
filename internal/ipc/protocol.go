@@ -9,11 +9,13 @@ import (
 type Cmd string
 
 const (
-	RunC  Cmd = "run"
-	StopC Cmd = "stop"
+	RunC    Cmd = "run"
+	AttachC Cmd = "attach"
+	PsC     Cmd = "ps"
+	StopC   Cmd = "stop"
 )
 
-// Base Command
+// ! ================= Base Command ==================
 type Command struct {
 	Cmd  Cmd    `json:"cmd"`
 	Args CmdArg `json:"args,omitempty"`
@@ -23,13 +25,28 @@ type CmdArg interface {
 	cmdarg()
 }
 
-// Run Command
+// ================== Run Command ==================
 type Run struct {
 	Image box.Image `json:"image"`
 	Name  string    `json:"name,omitempty"`
 }
 
 func (Run) cmdarg() {}
+
+// ==================attach Command ==================
+type Attach struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+}
+
+func (Attach) cmdarg() {}
+
+// ================== ps Command ==================
+type Ps struct{}
+
+func (Ps) cmdarg() {}
+
+// ================== UnmarshalJSON for Command ==================
 
 func (c *Command) UnmarshalJSON(data []byte) error {
 	var aux struct {
@@ -51,8 +68,18 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 				return err
 			}
 		}
-		// store pointer so the original code that passes &Run works with it
 		c.Args = &r
+	case AttachC:
+		var a Attach
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &a); err != nil {
+				return err
+			}
+		}
+		c.Args = &a
+	case PsC:
+		// ps has no args
+		c.Args = &Ps{}
 	default:
 		c.Args = nil
 	}

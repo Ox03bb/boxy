@@ -1,12 +1,63 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net"
+	"os"
 
 	"github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/ipc"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
+
+func RunAndAttach(req interface{}) error {
+	sock, err := ipc.Connect("")
+	if err != nil {
+		return fmt.Errorf("connecting to daemon: %w", err)
+	}
+	defer ipc.Close(sock)
+
+	reqBytes, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("marshaling request: %w", err)
+	}
+
+	if err := ipc.Send(sock, reqBytes); err != nil {
+		return fmt.Errorf("sending request to daemon: %w", err)
+	}
+
+	unixSock, ok := sock.(*net.UnixConn)
+	if !ok {
+		return fmt.Errorf("socket is not a unix domain socket")
+	}
+
+	fd, err := ipc.ReceiveFD(unixSock)
+	if err != nil {
+		return fmt.Errorf("receiving FD: %w", err)
+	}
+
+	ptyFile := os.NewFile(uintptr(fd), "pty")
+	if ptyFile == nil {
+		return fmt.Errorf("failed to create file from fd")
+	}
+	defer ptyFile.Close()
+
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("setting raw mode: %w", err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	go func() {
+		_, _ = io.Copy(ptyFile, os.Stdin)
+	}()
+
+	_, err = io.Copy(os.Stdout, ptyFile)
+	return err
+}
 
 func RunHandler(cmd *cobra.Command, args []string) (*ipc.Command, error) {
 	runResult, err := RunArgsParse(cmd, args)
@@ -53,8 +104,13 @@ func RunArgsParse(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 		command = []string{"/bin/sh"}
 	}
 
+	imageObj, err := box.LoadImage(image)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load image %s: %w", image, err)
+	}
+
 	run := &ipc.Run{
-		Image: box.Image{Name: image, Cmd: command},
+		Image: *imageObj,
 		Name:  name,
 	}
 	return run, nil
