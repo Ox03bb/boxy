@@ -76,7 +76,7 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	}
 
-	box.Pty = slave.Name()
+	box.Pty = master.Name()
 
 	defer slave.Close()
 

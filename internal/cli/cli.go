@@ -45,16 +45,16 @@ var attachCmd = &cobra.Command{
 	Use:   "attach [OPTIONS] BOX",
 	Short: "Attach to a running box",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := handler.AttachHandler(cmd, args)
+		req, err := handler.AttachHandler(cmd, args)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
 
-		// if err := handler.AttachToBox(req); err != nil {
-		// 	fmt.Println("Error:", err)
-		// 	return
-		// }
+		if err := handler.AttachToBox(req); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
 	},
 }
 

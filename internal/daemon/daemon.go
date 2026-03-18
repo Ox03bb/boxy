@@ -123,6 +123,8 @@ func handler(c net.Conn) {
 		dh.PsHandler(cmnd, c)
 	case ipc.RmC:
 		dh.RmHandler(cmnd, c)
+	case ipc.AttachC:
+		dh.AttachHandler(cmnd, c)
 	default:
 		fmt.Println("Error: command not found")
 	}
