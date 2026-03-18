@@ -24,18 +24,17 @@ const ( //Box Status
 )
 
 type Box struct {
-	ID          string
-	Name        string
-	Root        string
-	Hostname    string
-	Image       Image
-	Status      string
-	Created_at  time.Time
-	Pty         string
-	ContainerID string
-	Ports       map[string]string
-	Params      map[string]string
-	Env         map[string]string
+	ID         string
+	Name       string
+	Root       string
+	Hostname   string
+	Image      Image
+	Status     string
+	Created_at time.Time
+	Pty        string
+	Ports      map[string]string
+	Params     map[string]string
+	Env        map[string]string
 }
 
 type BoxService interface {
