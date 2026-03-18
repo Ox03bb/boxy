@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	bx "github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/config"
@@ -42,15 +45,11 @@ func RmHandler(c ipc.Command, sock net.Conn) {
 		return
 	}
 
-	// try to unmount common pseudo-filesystems inside the box rootfs
+	// unmount any mount points that live under the box rootfs.
 	rootfs := filepath.Join(envPath, id, "rootfs")
-	mounts := []string{"proc", "sys", "dev", "run", "tmp", "mnt"}
-	for _, m := range mounts {
-		p := filepath.Join(rootfs, m)
-		if _, err := os.Stat(p); err == nil {
-			// attempt lazy unmount to detach mounts that may be busy
-			_ = unix.Unmount(p, unix.MNT_DETACH)
-		}
+	if err := unmountMountsUnder(rootfs); err != nil {
+		// non-fatal: warn caller but continue to attempt removal
+		fmt.Fprintf(sock, "Warning: some mounts could not be detached: %v\n", err)
 	}
 
 	boxDir := filepath.Join(envPath, id)
@@ -71,4 +70,50 @@ func RmHandler(c ipc.Command, sock net.Conn) {
 	}
 
 	fmt.Fprintf(sock, "Removed %s\n", id)
+}
+
+// unmountMountsUnder parses /proc/self/mounts and unmounts mounts whose
+// mount point path is under the provided root. Unmounts are attempted in
+// reverse path length order to unmount children before parents.
+func unmountMountsUnder(root string) error {
+	f, err := os.Open("/proc/self/mounts")
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var mpoints []string
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+		if len(fields) < 2 {
+			continue
+		}
+		mpoint := fields[1]
+		// normalize and compare
+		if strings.HasPrefix(mpoint, root) {
+			mpoints = append(mpoints, mpoint)
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	if len(mpoints) == 0 {
+		return nil
+	}
+
+	// unmount deepest paths first
+	sort.Slice(mpoints, func(i, j int) bool {
+		return len(mpoints[i]) > len(mpoints[j])
+	})
+
+	var lastErr error
+	for _, mp := range mpoints {
+		if err := unix.Unmount(mp, unix.MNT_DETACH); err != nil {
+			lastErr = err
+		}
+	}
+	return lastErr
 }
