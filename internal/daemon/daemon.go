@@ -120,6 +120,9 @@ func daemon(socketPath string) error {
 }
 
 func handler(c net.Conn) {
+	defer func() {
+		_ = c.Close()
+	}()
 	buf, err := ipc.Recive(c)
 
 	fmt.Printf("Received: %s\n", string(buf))
