@@ -76,7 +76,11 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	}
 
-	box.Pty = master.Name()
+	box.Pty = master
+	// store box in in-memory runtime if available
+	if rt != nil {
+		_ = rt.Add(&box)
+	}
 
 	defer slave.Close()
 

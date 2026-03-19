@@ -67,9 +67,14 @@ func ExecHandler(c ipc.Command, sock net.Conn) {
 		return
 	}
 
-	// update box metadata (store last pty path)
-	boxObj.Pty = master.Name()
+	// update box metadata (store PTY file handle in-memory)
+	boxObj.Pty = master
 	_ = bx.WriteBoxJSON(boxObj)
+
+	// store box in in-memory runtime if available
+	if rt != nil {
+		_ = rt.Add(boxObj)
+	}
 
 	// start the command
 	if err := cmd.Start(); err != nil {
