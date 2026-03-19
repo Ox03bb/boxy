@@ -35,12 +35,21 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	// Prefer command provided in Run.Cmd; otherwise fall back to image default.
 	runArgs := c.Args.(*ipc.Run)
 	cmnd := runArgs.Cmd
+
+	fmt.Printf("-> c.Args.(*ipc.Run).Image.Cmd: %v\n", c.Args.(*ipc.Run).Image.Cmd)
+	fmt.Printf("-> runArgs.Cmd: %v\n", runArgs.Image.Cmd)
+
 	if len(cmnd) == 0 {
 		cmnd = runArgs.Image.Cmd
 	}
+
+	fmt.Printf("-> 2 cmnd: %v\n", cmnd)
+
 	if len(cmnd) == 0 {
 		cmnd = []string{"/bin/sh"}
 	}
+
+	fmt.Printf("-> 3 cmnd: %v\n", cmnd)
 
 	image := runArgs.Image
 
@@ -72,6 +81,8 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 	args = append(args, box.ID)
 
 	args = append(args, cmnd...)
+
+	fmt.Printf("cmnd: %v\n", cmnd)
 
 	cmd := exec.Command("/proc/self/exe", args...)
 
