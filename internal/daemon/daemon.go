@@ -12,6 +12,7 @@ import (
 	"github.com/Ox03bb/boxy/internal/config"
 	dh "github.com/Ox03bb/boxy/internal/daemon/handler"
 	"github.com/Ox03bb/boxy/internal/ipc"
+	runt "github.com/Ox03bb/boxy/internal/runtime"
 )
 
 func StartDaemon() {
@@ -71,6 +72,10 @@ func daemon(socketPath string) error {
 	os.Chmod(socketPath, 0660)
 
 	defer os.Remove(socketPath)
+
+	// initialize in-memory runtime and inject into handlers
+	r := runt.New()
+	dh.SetRuntime(r)
 
 	// handle SIGINT / SIGTERM for graceful shutdown
 	sigc := make(chan os.Signal, 1)

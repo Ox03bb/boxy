@@ -31,7 +31,7 @@ type Box struct {
 	Image      Image
 	Status     string
 	Created_at time.Time
-	Pty        string
+	Pty        *os.File `json:"-"`
 	PIDs       []int
 	Ports      map[string]string
 	Params     map[string]string
