@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	bx "github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/ipc"
@@ -50,6 +51,8 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 		}
 		return
 	}
+	box.Status = bx.Created
+	box.Created_at = time.Now()
 
 	args := []string{"child"}
 
@@ -58,6 +61,9 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	args = append(args, "--rootfs")
 	args = append(args, box.Root)
+
+	args = append(args, "--id")
+	args = append(args, box.ID)
 
 	args = append(args, cmnd...)
 
@@ -70,7 +76,11 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	}
 
-	box.Pty = slave.Name()
+	box.Pty = master
+	// store box in in-memory runtime if available
+	if rt != nil {
+		_ = rt.Add(&box)
+	}
 
 	defer slave.Close()
 
@@ -95,10 +105,27 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 		panic("socket is not a UnixConn")
 	}
 
-	bx.WriteBoxJSON(&box) // write the metadata inside box.json
+	// write initial metadata (no PID yet)
+	if err := bx.WriteBoxJSON(&box); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to write box json:", err)
+	}
 
 	err = cmd.Start()
 	if err != nil {
 		panic("Error: " + err.Error())
+	}
+
+	// record the PID in box.PIDs and update status
+	if cmd.Process != nil {
+		pid := cmd.Process.Pid
+		box.PIDs = append(box.PIDs, pid)
+		box.Status = bx.Running
+		if err := bx.WriteBoxJSON(&box); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to update box json with PID:", err)
+		}
+	}
+
+	if err := bx.UpdateStatus(box.ID, bx.Running); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to update box status to running:", err)
 	}
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/Ox03bb/boxy/internal/config"
 	dh "github.com/Ox03bb/boxy/internal/daemon/handler"
 	"github.com/Ox03bb/boxy/internal/ipc"
+	runt "github.com/Ox03bb/boxy/internal/runtime"
 )
 
 func StartDaemon() {
@@ -30,7 +31,7 @@ func child() {
 	name := os.Args[3]
 	root := os.Args[5]
 
-	cmd = exec.Command(os.Args[6], os.Args[7:]...)
+	cmd = exec.Command(os.Args[8], os.Args[9:]...)
 
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
@@ -71,6 +72,10 @@ func daemon(socketPath string) error {
 	os.Chmod(socketPath, 0660)
 
 	defer os.Remove(socketPath)
+
+	// initialize in-memory runtime and inject into handlers
+	r := runt.New()
+	dh.SetRuntime(r)
 
 	// handle SIGINT / SIGTERM for graceful shutdown
 	sigc := make(chan os.Signal, 1)
@@ -119,8 +124,16 @@ func handler(c net.Conn) {
 	switch cmnd.Cmd {
 	case ipc.RunC:
 		dh.RunHandler(cmnd, c)
+	case ipc.ExecC:
+		dh.ExecHandler(cmnd, c)
+	case ipc.StopC:
+		dh.StopHandler(cmnd, c)
 	case ipc.PsC:
 		dh.PsHandler(cmnd, c)
+	case ipc.RmC:
+		dh.RmHandler(cmnd, c)
+	case ipc.AttachC:
+		dh.AttachHandler(cmnd, c)
 	default:
 		fmt.Println("Error: command not found")
 	}

@@ -45,16 +45,16 @@ var attachCmd = &cobra.Command{
 	Use:   "attach [OPTIONS] BOX",
 	Short: "Attach to a running box",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := handler.AttachHandler(cmd, args)
+		req, err := handler.AttachHandler(cmd, args)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
 		}
 
-		// if err := handler.AttachToBox(req); err != nil {
-		// 	fmt.Println("Error:", err)
-		// 	return
-		// }
+		if err := handler.AttachToBox(req); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
 	},
 }
 
@@ -64,10 +64,42 @@ func init() {
 
 // ================================================================
 
+// ======================= Exec command =======================
+
+var execCmd = &cobra.Command{
+	Use:   "exec [OPTIONS] BOX COMMAND",
+	Short: "Run a command in a running box (like docker exec)",
+	Run: func(cmd *cobra.Command, args []string) {
+		req, err := handler.ExecHandler(cmd, args)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		if err := handler.RunAndAttach(req); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	execCmd.Flags().BoolP("tty", "t", false, "Allocate a pseudo-TTY")
+	execCmd.Flags().BoolP("interactive", "i", false, "Keep STDIN open")
+	execCmd.Flags().String("name", "", "use name instead of ID to identify the box")
+}
+
+// ================================================================
+
+// ================================================================
+
 func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(attachCmd)
+	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(psCmd)
+	rootCmd.AddCommand(rmCmd)
+	rootCmd.AddCommand(stopCmd)
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -84,4 +116,36 @@ var psCmd = &cobra.Command{
 			return
 		}
 	},
+}
+
+var rmCmd = &cobra.Command{
+	Use:   "rm [OPTIONS] BOX",
+	Short: "Remove a box by ID or name",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.RmHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	rmCmd.Flags().String("name", "", "remove a box by name instead of ID")
+}
+
+// ======================= Stop command =======================
+
+var stopCmd = &cobra.Command{
+	Use:   "stop [OPTIONS] BOX",
+	Short: "Stop (kill) a running box but keep rootfs and metadata",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.StopHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	stopCmd.Flags().String("name", "", "stop a box by name instead of ID")
 }

@@ -13,6 +13,8 @@ const (
 	AttachC Cmd = "attach"
 	PsC     Cmd = "ps"
 	StopC   Cmd = "stop"
+	RmC     Cmd = "rm"
+	ExecC   Cmd = "exec"
 )
 
 // ! ================= Base Command ==================
@@ -41,10 +43,37 @@ type Attach struct {
 
 func (Attach) cmdarg() {}
 
+// ================== exec Command ==================
+type Exec struct {
+	BoxIdentifier string   `json:"box_id"`
+	Is_name       bool     `json:"is_name"`
+	Cmd           []string `json:"cmd,omitempty"`
+	Tty           bool     `json:"tty,omitempty"`
+	Interactive   bool     `json:"interactive,omitempty"`
+}
+
+func (Exec) cmdarg() {}
+
 // ================== ps Command ==================
 type Ps struct{}
 
 func (Ps) cmdarg() {}
+
+// ================== rm Command ==================
+type Rm struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+}
+
+func (Rm) cmdarg() {}
+
+// ================== stop Command ==================
+type Stop struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+}
+
+func (Stop) cmdarg() {}
 
 // ================== UnmarshalJSON for Command ==================
 
@@ -77,6 +106,30 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			}
 		}
 		c.Args = &a
+	case ExecC:
+		var e Exec
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &e); err != nil {
+				return err
+			}
+		}
+		c.Args = &e
+	case RmC:
+		var r Rm
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &r); err != nil {
+				return err
+			}
+		}
+		c.Args = &r
+	case StopC:
+		var s Stop
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &s); err != nil {
+				return err
+			}
+		}
+		c.Args = &s
 	case PsC:
 		// ps has no args
 		c.Args = &Ps{}
