@@ -29,6 +29,7 @@ type Box struct {
 	Root       string
 	Hostname   string
 	Image      Image
+	Cmd        []string
 	Status     string
 	Created_at time.Time
 	Pty        *os.File `json:"-"`

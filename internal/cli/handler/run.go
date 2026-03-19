@@ -109,9 +109,12 @@ func RunArgsParse(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 		return nil, fmt.Errorf("failed to load image %s: %w", image, err)
 	}
 
+	// Do not override the image's default here. Send CLI command in Run.Cmd
+	// and let the daemon choose between Run.Cmd and Image.Cmd.
 	run := &ipc.Run{
 		Image: *imageObj,
 		Name:  name,
+		Cmd:   command,
 	}
 	return run, nil
 }

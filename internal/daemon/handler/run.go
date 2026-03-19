@@ -32,15 +32,21 @@ func RunHandler(c ipc.Command, sock net.Conn) {
 
 	box.SetRoot("")
 
-	cmnd := c.Args.(*ipc.Run).Image.Cmd
-
+	// Prefer command provided in Run.Cmd; otherwise fall back to image default.
+	runArgs := c.Args.(*ipc.Run)
+	cmnd := runArgs.Cmd
+	if len(cmnd) == 0 {
+		cmnd = runArgs.Image.Cmd
+	}
 	if len(cmnd) == 0 {
 		cmnd = []string{"/bin/sh"}
 	}
 
-	image := c.Args.(*ipc.Run).Image
+	image := runArgs.Image
 
 	box.Image = image
+	// store effective command on the box so status/listing can prefer it
+	box.Cmd = cmnd
 
 	err := image.InitFs(&box)
 

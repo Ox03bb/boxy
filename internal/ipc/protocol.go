@@ -31,6 +31,7 @@ type CmdArg interface {
 type Run struct {
 	Image box.Image `json:"image"`
 	Name  string    `json:"name,omitempty"`
+	Cmd   []string  `json:"cmd,omitempty"`
 }
 
 func (Run) cmdarg() {}
