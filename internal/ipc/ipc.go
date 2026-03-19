@@ -2,6 +2,7 @@ package ipc
 
 import (
 	"fmt"
+	"io"
 	"net"
 
 	"golang.org/x/sys/unix"
@@ -29,16 +30,18 @@ func Send(c net.Conn, msg []byte) error {
 	if err != nil {
 		return err
 	}
+	// If this is a unix domain socket, half-close the write side to signal EOF
+	// to the peer which may be using io.ReadAll to receive the message.
+	if u, ok := c.(*net.UnixConn); ok {
+		if err := u.CloseWrite(); err != nil {
+			return fmt.Errorf("close write error: %w", err)
+		}
+	}
 	return nil
 }
 
 func Recive(c net.Conn) ([]byte, error) {
-	buf := make([]byte, 2048)
-	n, err := c.Read(buf)
-	if err != nil {
-		return nil, err
-	}
-	return buf[0:n], nil
+	return io.ReadAll(c)
 }
 
 func Close(c net.Conn) error {

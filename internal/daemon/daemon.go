@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	bx "github.com/Ox03bb/boxy/internal/box"
 	"github.com/Ox03bb/boxy/internal/config"
 	dh "github.com/Ox03bb/boxy/internal/daemon/handler"
 	"github.com/Ox03bb/boxy/internal/ipc"
@@ -77,12 +78,29 @@ func daemon(socketPath string) error {
 	r := runt.New()
 	dh.SetRuntime(r)
 
+	// ensure runtime boxes are marked exited on any shutdown
+	defer func() {
+		ids := r.ListIDs()
+		for _, id := range ids {
+			if err := bx.UpdateStatus(id, bx.Exited); err != nil {
+				fmt.Printf("failed to mark %s exited: %v\n", id, err)
+			}
+		}
+	}()
+
 	// handle SIGINT / SIGTERM for graceful shutdown
 	sigc := make(chan os.Signal, 1)
 	signal.Notify(sigc, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		s := <-sigc
 		fmt.Printf("received signal %v, shutting down\n", s)
+		// mark runtime boxes exited before closing listener
+		ids := r.ListIDs()
+		for _, id := range ids {
+			if err := bx.UpdateStatus(id, bx.Exited); err != nil {
+				fmt.Printf("failed to mark %s exited: %v\n", id, err)
+			}
+		}
 		l.Close()
 	}()
 
@@ -102,6 +120,9 @@ func daemon(socketPath string) error {
 }
 
 func handler(c net.Conn) {
+	defer func() {
+		_ = c.Close()
+	}()
 	buf, err := ipc.Recive(c)
 
 	fmt.Printf("Received: %s\n", string(buf))
@@ -124,6 +145,8 @@ func handler(c net.Conn) {
 	switch cmnd.Cmd {
 	case ipc.RunC:
 		dh.RunHandler(cmnd, c)
+	case ipc.StartC:
+		dh.StartHandler(cmnd, c)
 	case ipc.ExecC:
 		dh.ExecHandler(cmnd, c)
 	case ipc.StopC:

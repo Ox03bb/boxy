@@ -41,7 +41,10 @@ func PsHandler(c ipc.Command, sock net.Conn) {
 		}
 
 		cmdStr := ""
-		if len(b.Image.Cmd) > 0 {
+		// prefer box-level command (set at run time) otherwise show image default
+		if len(b.Cmd) > 0 {
+			cmdStr = strings.Join(b.Cmd, " ")
+		} else if len(b.Image.Cmd) > 0 {
 			cmdStr = strings.Join(b.Image.Cmd, " ")
 		}
 
