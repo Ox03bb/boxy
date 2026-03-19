@@ -15,6 +15,7 @@ const (
 	StopC   Cmd = "stop"
 	RmC     Cmd = "rm"
 	ExecC   Cmd = "exec"
+	StartC  Cmd = "start"
 )
 
 // ! ================= Base Command ==================
@@ -54,6 +55,15 @@ type Exec struct {
 }
 
 func (Exec) cmdarg() {}
+
+// ================== start Command ==================
+type Start struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+	Attach        bool   `json:"attach,omitempty"`
+}
+
+func (Start) cmdarg() {}
 
 // ================== ps Command ==================
 type Ps struct{}
@@ -115,6 +125,14 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			}
 		}
 		c.Args = &e
+	case StartC:
+		var s Start
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &s); err != nil {
+				return err
+			}
+		}
+		c.Args = &s
 	case RmC:
 		var r Rm
 		if len(aux.Args) != 0 {

@@ -142,6 +142,8 @@ func handler(c net.Conn) {
 	switch cmnd.Cmd {
 	case ipc.RunC:
 		dh.RunHandler(cmnd, c)
+	case ipc.StartC:
+		dh.StartHandler(cmnd, c)
 	case ipc.ExecC:
 		dh.ExecHandler(cmnd, c)
 	case ipc.StopC:

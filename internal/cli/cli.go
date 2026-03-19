@@ -1,16 +1,33 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/Ox03bb/boxy/internal/cli/handler"
+	"github.com/Ox03bb/boxy/internal/ipc"
 	"github.com/spf13/cobra"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "boxy",
 	Short: "Boxy CLI",
+}
+
+func Execute() {
+	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(attachCmd)
+	rootCmd.AddCommand(execCmd)
+	rootCmd.AddCommand(startCmd)
+	rootCmd.AddCommand(psCmd)
+	rootCmd.AddCommand(rmCmd)
+	rootCmd.AddCommand(stopCmd)
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 // ======================= Run command =======================
@@ -37,8 +54,6 @@ func init() {
 	runCmd.Flags().String("image", "", "Image to use (optional)")
 }
 
-// ================================================================
-
 // ======================= Attach command =======================
 
 var attachCmd = &cobra.Command{
@@ -61,8 +76,6 @@ var attachCmd = &cobra.Command{
 func init() {
 	attachCmd.Flags().String("name", "", "attach to a box by name instead of ID")
 }
-
-// ================================================================
 
 // ======================= Exec command =======================
 
@@ -89,23 +102,7 @@ func init() {
 	execCmd.Flags().String("name", "", "use name instead of ID to identify the box")
 }
 
-// ================================================================
-
-// ================================================================
-
-func Execute() {
-	rootCmd.AddCommand(runCmd)
-	rootCmd.AddCommand(attachCmd)
-	rootCmd.AddCommand(execCmd)
-	rootCmd.AddCommand(psCmd)
-	rootCmd.AddCommand(rmCmd)
-	rootCmd.AddCommand(stopCmd)
-
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
+// ======================= Ps command =======================
 
 var psCmd = &cobra.Command{
 	Use:   "ps",
@@ -148,4 +145,51 @@ var stopCmd = &cobra.Command{
 
 func init() {
 	stopCmd.Flags().String("name", "", "stop a box by name instead of ID")
+}
+
+// ======================= Start command =======================
+
+var startCmd = &cobra.Command{
+	Use:   "start [OPTIONS] BOX",
+	Short: "Start a stopped/exited box",
+	Run: func(cmd *cobra.Command, args []string) {
+		req, err := handler.StartHandler(cmd, args)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		// if attach flag provided, reuse RunAndAttach which waits for FD
+		attachFlag, _ := cmd.Flags().GetBool("attach")
+		if attachFlag {
+			if err := handler.RunAndAttach(req); err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+			return
+		}
+
+		// otherwise just send request and print response
+		sock, err := ipc.Connect("")
+		if err != nil {
+			fmt.Println("Error connecting to daemon:", err)
+			return
+		}
+		defer ipc.Close(sock)
+
+		b, _ := json.Marshal(req)
+		if err := ipc.Send(sock, b); err != nil {
+			fmt.Println("Error sending request:", err)
+			return
+		}
+		resp, err := ipc.Recive(sock)
+		if err == nil && len(resp) > 0 {
+			fmt.Println(string(resp))
+		}
+	},
+}
+
+func init() {
+	startCmd.Flags().BoolP("attach", "a", false, "Attach to the box after starting")
+	startCmd.Flags().String("name", "", "use name instead of ID to identify the box")
 }
