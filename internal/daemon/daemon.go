@@ -157,6 +157,8 @@ func handler(c net.Conn) {
 		dh.RmHandler(cmnd, c)
 	case ipc.AttachC:
 		dh.AttachHandler(cmnd, c)
+	case ipc.LogsC:
+		dh.LogsHandler(cmnd, c)
 	default:
 		fmt.Println("Error: command not found")
 	}
