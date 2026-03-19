@@ -9,6 +9,7 @@ import (
 
 	"github.com/Ox03bb/boxy/internal/ipc"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"golang.org/x/term"
 )
 
@@ -71,6 +72,13 @@ func AttachToBox(req interface{}) error {
 		return fmt.Errorf("failed to wrap fd")
 	}
 	defer pty.Close()
+
+	// Set the remote pty window size to match local terminal so the shell
+	// redraws its prompt immediately.
+	if wsCols, wsRows, err := term.GetSize(int(os.Stdin.Fd())); err == nil {
+		ws := &unix.Winsize{Col: uint16(wsCols), Row: uint16(wsRows)}
+		_ = unix.IoctlSetWinsize(int(pty.Fd()), unix.TIOCSWINSZ, ws)
+	}
 
 	// Set terminal raw mode
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
