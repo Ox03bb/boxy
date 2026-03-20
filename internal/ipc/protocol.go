@@ -12,6 +12,7 @@ const (
 	RunC    Cmd = "run"
 	AttachC Cmd = "attach"
 	PsC     Cmd = "ps"
+	ImagesC Cmd = "images"
 	StopC   Cmd = "stop"
 	RmC     Cmd = "rm"
 	ExecC   Cmd = "exec"
@@ -70,6 +71,11 @@ func (Start) cmdarg() {}
 type Ps struct{}
 
 func (Ps) cmdarg() {}
+
+// ================== images Command ==================
+type Images struct{}
+
+func (Images) cmdarg() {}
 
 // ================== rm Command ==================
 type Rm struct {
@@ -171,6 +177,9 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 	case PsC:
 		// ps has no args
 		c.Args = &Ps{}
+	case ImagesC:
+		// images has no args
+		c.Args = &Images{}
 	default:
 		c.Args = nil
 	}

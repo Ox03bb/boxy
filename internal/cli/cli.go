@@ -22,6 +22,7 @@ func Execute() {
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(psCmd)
+	rootCmd.AddCommand(imagesCmd)
 	rootCmd.AddCommand(rmCmd)
 	rootCmd.AddCommand(stopCmd)
 
@@ -133,6 +134,17 @@ var psCmd = &cobra.Command{
 	Short: "List running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := handler.PsHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+var imagesCmd = &cobra.Command{
+	Use:   "images",
+	Short: "List available images",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.ImagesHandler(cmd, args); err != nil {
 			fmt.Println("Error:", err)
 			return
 		}

@@ -137,3 +137,28 @@ func LoadImage(name string) (*Image, error) {
 	}
 	return img, nil
 }
+
+// ListImages returns all images found in the registry directory.
+func ListImages() ([]Image, error) {
+	registry := os.ExpandEnv(config.RegistryPath)
+
+	files, err := os.ReadDir(registry)
+	if err != nil {
+		return nil, err
+	}
+
+	var imgs []Image
+	for _, f := range files {
+		if !f.IsDir() {
+			continue
+		}
+		img, err := LoadImage(f.Name())
+		if err != nil {
+			log.Printf("ListImages: skipping %s: %v", f.Name(), err)
+			continue
+		}
+		imgs = append(imgs, *img)
+	}
+
+	return imgs, nil
+}

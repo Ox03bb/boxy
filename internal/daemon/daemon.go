@@ -153,6 +153,8 @@ func handler(c net.Conn) {
 		dh.StopHandler(cmnd, c)
 	case ipc.PsC:
 		dh.PsHandler(cmnd, c)
+	case ipc.ImagesC:
+		dh.ImagesHandler(cmnd, c)
 	case ipc.RmC:
 		dh.RmHandler(cmnd, c)
 	case ipc.AttachC:
