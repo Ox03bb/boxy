@@ -39,7 +39,7 @@ func ParseRunArgs(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 	}
 
 	if len(command) == 0 {
-		command = []string{"/bin/sh"}
+		command = []string{}
 	}
 
 	run := &ipc.Run{

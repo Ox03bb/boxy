@@ -12,10 +12,12 @@ const (
 	RunC    Cmd = "run"
 	AttachC Cmd = "attach"
 	PsC     Cmd = "ps"
+	ImagesC Cmd = "images"
 	StopC   Cmd = "stop"
 	RmC     Cmd = "rm"
 	ExecC   Cmd = "exec"
 	StartC  Cmd = "start"
+	LogsC   Cmd = "logs"
 )
 
 // ! ================= Base Command ==================
@@ -70,6 +72,11 @@ type Ps struct{}
 
 func (Ps) cmdarg() {}
 
+// ================== images Command ==================
+type Images struct{}
+
+func (Images) cmdarg() {}
+
 // ================== rm Command ==================
 type Rm struct {
 	BoxIdentifier string `json:"box_id"`
@@ -85,6 +92,16 @@ type Stop struct {
 }
 
 func (Stop) cmdarg() {}
+
+// ================== logs Command ==================
+type Logs struct {
+	BoxIdentifier string `json:"box_id"`
+	Is_name       bool   `json:"is_name"`
+	Follow        bool   `json:"follow,omitempty"`
+	Tail          int    `json:"tail,omitempty"`
+}
+
+func (Logs) cmdarg() {}
 
 // ================== UnmarshalJSON for Command ==================
 
@@ -149,9 +166,20 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 			}
 		}
 		c.Args = &s
+	case LogsC:
+		var l Logs
+		if len(aux.Args) != 0 {
+			if err := json.Unmarshal(aux.Args, &l); err != nil {
+				return err
+			}
+		}
+		c.Args = &l
 	case PsC:
 		// ps has no args
 		c.Args = &Ps{}
+	case ImagesC:
+		// images has no args
+		c.Args = &Images{}
 	default:
 		c.Args = nil
 	}

@@ -18,9 +18,11 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	rootCmd.AddCommand(runCmd)
 	rootCmd.AddCommand(attachCmd)
+	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(execCmd)
 	rootCmd.AddCommand(startCmd)
 	rootCmd.AddCommand(psCmd)
+	rootCmd.AddCommand(imagesCmd)
 	rootCmd.AddCommand(rmCmd)
 	rootCmd.AddCommand(stopCmd)
 
@@ -77,6 +79,29 @@ func init() {
 	attachCmd.Flags().String("name", "", "attach to a box by name instead of ID")
 }
 
+var logsCmd = &cobra.Command{
+	Use:   "logs [OPTIONS] BOX",
+	Short: "Show logs for a box (streams PTY output)",
+	Run: func(cmd *cobra.Command, args []string) {
+		req, err := handler.LogsHandler(cmd, args)
+		if err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+
+		if err := handler.LogsFromBox(req); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+func init() {
+	logsCmd.Flags().String("name", "", "use name instead of ID to identify the box")
+	logsCmd.Flags().BoolP("follow", "f", false, "Follow log output")
+	logsCmd.Flags().IntP("tail", "n", 0, "Show last N lines")
+}
+
 // ======================= Exec command =======================
 
 var execCmd = &cobra.Command{
@@ -109,6 +134,17 @@ var psCmd = &cobra.Command{
 	Short: "List running boxes",
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := handler.PsHandler(cmd, args); err != nil {
+			fmt.Println("Error:", err)
+			return
+		}
+	},
+}
+
+var imagesCmd = &cobra.Command{
+	Use:   "images",
+	Short: "List available images",
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := handler.ImagesHandler(cmd, args); err != nil {
 			fmt.Println("Error:", err)
 			return
 		}

@@ -101,7 +101,7 @@ func RunArgsParse(cmd *cobra.Command, args []string) (*ipc.Run, error) {
 	}
 
 	if len(command) == 0 {
-		command = []string{"/bin/sh"}
+		command = []string{}
 	}
 
 	imageObj, err := box.LoadImage(image)
