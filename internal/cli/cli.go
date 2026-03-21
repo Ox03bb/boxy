@@ -36,7 +36,7 @@ func Execute() {
 
 var runCmd = &cobra.Command{
 	Use:   "run [OPTIONS] IMAGE [COMMAND]",
-	Short: "Run the boxy command",
+	Short: "create and start a new box from an image",
 	Run: func(cmd *cobra.Command, args []string) {
 		req, err := handler.RunHandler(cmd, args)
 		if err != nil {
